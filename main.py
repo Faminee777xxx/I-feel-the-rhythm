@@ -454,6 +454,12 @@ def https_attack():
         print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
 
 # Start attack
+# Check Help
+if args.help_menu:
+    print(help)
+    exit()
+else:
+    pass
 if check_target(target_ip, port_target):
     if args.random_agent:
         rand_ua = True
@@ -464,12 +470,9 @@ if check_target(target_ip, port_target):
     print(f"[{back_colors['green']}*{back_colors['reset']}] {styles['bright']}Checking...{styles['reset']}")
     time.sleep(1)
     for i in range(num_thread):
-        if args.help_menu:
-            print(help)
-            exit()
-        
+
         # TOR Attack (slowloris)
-        elif args.slowloris_attack and args.tor_ip and args.tor_port:
+        if args.slowloris_attack and args.tor_ip and args.tor_port:
             if check_tor_running():
                 print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor is running and reachable{styles['reset']}")
                 time.sleep(3)
