@@ -1,7 +1,4 @@
 README (English)
-markdown
-Copy
-Edit
 # Network Attack Tool
 
 A Python script for testing Payload and Slowloris attacks with support for Proxy and Tor.
@@ -16,8 +13,8 @@ A Python script for testing Payload and Slowloris attacks with support for Proxy
 
 ## Usage
 
-```bash
-python ddos.py [options]
+```
+python main.py [options]
 Options
 Option	Description
 -h, --help	Show help menu
@@ -51,17 +48,11 @@ Option	Description
 --proxy-port <PORT>	Set Proxy Port
 
 Examples
-Payload attack 100KB via Tor:
 
-bash
-Copy
-Edit
+Payload attack 100KB via Tor:
 python ddos.py --ip 1.2.3.4 -p 80 -payloada --set-size-payload 102400 --tor-ip 127.0.0.1 --tor-port 9050
 Slowloris attack via Proxy:
 
-bash
-Copy
-Edit
 python ddos.py --ip 1.2.3.4 -p 80 -slowa --proxy-ip 192.168.1.10 --proxy-port 1080
 Warning
 Use only for testing and educational purposes.
