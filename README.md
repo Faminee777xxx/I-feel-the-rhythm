@@ -123,3 +123,10 @@ python main.py --ip 1.2.3.4 -p 80 -slowa --proxy-ip 192.168.1.10 --proxy-port 10
 ## คำเตือน
 ใช้เพื่อการทดสอบและศึกษาเท่านั้น
 การโจมตีโดยไม่ได้รับอนุญาตอาจผิดกฎหมายและมีโทษตามกฎหมาย
+
+![Chainsaw Man](https://static.wikia.nocookie.net/chainsaw-man/images/e/e4/Volume_14_%28Textless%29.png/revision/latest/scale-to-width-down/1000?cb=20250505195335)
+
+> **Image credit:**  
+> Source: [Chainsaw Man Wiki](https://chainsawman.fandom.com)  
+> Artist: Fujimoto Tatsuki
+
