@@ -1,5 +1,5 @@
-# Attack Tool - Usage and Options
-
+# Attack Tool - Usage and Options 
+# Version 4
 ## English Version
 
 ### Options and What They Do:
@@ -56,7 +56,7 @@
 ---
 
 ## เวอร์ชันภาษาไทย (Thai Version)
-
+# เวอร์ชั่น 4
 ### ตัวเลือกและคำอธิบาย:
 
 | ตัวเลือก                      | คำอธิบาย                                    | ค่าเริ่มต้น     |
