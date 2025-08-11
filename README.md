@@ -1,5 +1,5 @@
 # README (English)
-# Network Attack Tool (Dos)
+# Network Attack Tool (DDos)
 
 A Python script for testing Payload and Slowloris attacks with support for Proxy and Tor.
 
@@ -62,7 +62,7 @@ Use only for testing and educational purposes.
 ---
 
 # README (ภาษาไทย)
-# เครื่องมือโจมตีเครือข่าย (Dos)
+# เครื่องมือโจมตีเครือข่าย (DDos) ถ้ายิงผ่าน proxy, tor หลายตัว
 
 สคริปต์ Python สำหรับทดสอบการโจมตีแบบ Payload และ Slowloris โดยรองรับ Proxy และ Tor
 
