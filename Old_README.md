@@ -26,7 +26,7 @@ Option	Description
 
 Payload Mode (works with Tor & Proxy)
 Option	                      Description
--payloada, --payload-attack	  Send a JSON payload to server
+-payloada, --payload-attack	  Send HTTP POST Request to the target
 --set-size-payload, -set-p	  Set payload size (default 51200)
 --set-msg-payload	            Set custom   payload message
 --random-payload	            Use randomized numeric payload
@@ -89,7 +89,7 @@ Options
 
 โหมด Payload (ใช้ร่วมกับ Tor & Proxy ได้)
 ตัวเลือก	                      คำอธิบาย
--payloada, --payload-attack	ส่ง JSON Payload ไปยังเซิร์ฟเวอร์
+-payloada, --payload-attack	สคริปต์จะสร้างและส่ง HTTP POST Request ไปยังเป้าหมาย
 --set-size-payload, -set-p	กำหนดขนาด Payload (ค่าเริ่มต้น 51200)
 --set-msg-payload	          กำหนดข้อความใน Payload
 --random-payload	          ใช้ Payload แบบสุ่มตัวเลข
