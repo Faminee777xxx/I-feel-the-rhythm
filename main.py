@@ -164,6 +164,7 @@ random_payload = args.random_payload
 proxy_ip = args.proxy_ip
 proxy_port = args.proxy_port
 proxy_lists = args.proxy_list
+proxy_check = args.check_proxy_list
 
 # Tor
 tor_ip = args.tor_ip
