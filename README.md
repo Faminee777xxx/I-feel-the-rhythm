@@ -11,7 +11,7 @@
 | `--ip <IP>`                   | Target IP address                            |                |
 | `-p`, `--port <PORT>`          | Target Port                                  | 80             |
 | `-ths`, `--threads <N>`        | Number of threads                            | 100            |
-| `-num-socks`, `-n-socks`       | Number of Socks proxies                       | 1000           |
+| `-num-socks`, `-n-socks`       | Number of Socks                              | 1000           |
 | `-ra`, `--random-agent`        | Use random User-Agent header                  | Off            |
 
 ---
@@ -66,7 +66,7 @@
 | `--ip <IP>`                  | กำหนด IP เป้าหมาย                          |                 |
 | `-p`, `--port <PORT>`         | กำหนดพอร์ตเป้าหมาย                         | 80              |
 | `-ths`, `--threads <N>`       | จำนวนเธรดที่ใช้                             | 100             |
-| `-num-socks`, `-n-socks`      | จำนวน SOCKS proxy ที่ใช้                     | 1000            |
+| `-num-socks`, `-n-socks`      | จำนวน SOCKS ที่ใช้                     | 1000            |
 | `-ra`, `--random-agent`       | ใช้ User-Agent แบบสุ่ม                      | ปิดใช้งาน       |
 
 ---
