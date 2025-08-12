@@ -20,7 +20,7 @@
 
 | Option                         | Description                                   | Default        |
 |--------------------------------|-----------------------------------------------|----------------|
-| `-payloada`, `--payload-attack` | Send a JSON payload file to the server       |                |
+| `-payloada`, `--payload-attack` | Send HTTP POST Request to the target         |                |
 | `--set-size-payload`, `-set-p`  | Set size of payload in bytes                   | 51200 (50 KB)  |
 | `--set-msg-payload`             | Set custom message as payload                  |                |
 | `--random-payload`              | Use randomized payload data (number-based)    |                |
@@ -75,7 +75,7 @@
 
 | ตัวเลือก                      | คำอธิบาย                                    | ค่าเริ่มต้น     |
 |-------------------------------|---------------------------------------------|-----------------|
-| `-payloada`, `--payload-attack` | ส่งไฟล์ JSON เป็น payload ไปยังเซิร์ฟเวอร์   |                 |
+| `-payloada`, `--payload-attack` | สคริปต์จะสร้างและส่ง HTTP POST Request ไปยังเป้าหมาย|                 |
 | `--set-size-payload`, `-set-p`  | กำหนดขนาด payload (หน่วยไบต์)               | 51200 (50 KB)   |
 | `--set-msg-payload`            | กำหนดข้อความสำหรับ payload                   |                 |
 | `--random-payload`             | ใช้ payload แบบสุ่ม (ตัวเลข)                 |                 |
