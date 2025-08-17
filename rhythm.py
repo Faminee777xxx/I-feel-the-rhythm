@@ -82,7 +82,7 @@ def help():
 ║ -ra, --random-agent         : Random User-Agent                    ║
 ╠════════════════════════════════════════════════════════════════════╣
 ║ \Mode Payload (Can use with Tor & Proxy)                           ║
-║  -payloada, --payload-attack  : Send a JSON file to server         ║
+║  -payloada, --payload-attack : Send HTTP POST Request to the target║
 ║  -set-size-payload, -set-p    : Set Size of payload (default: 50KB)║
 ║  -set-msg-payload             : Set message of payload             ║
 ║  -random-payload              : Randomized payload (Number)        ║
