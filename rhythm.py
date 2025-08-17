@@ -1,4 +1,4 @@
-# Version 4.2   -
+# Version 4.3   -
 #-=-=-=-=-=-=-=-=
 
 
@@ -9,7 +9,6 @@ import os
 import random
 import time
 import socks
-import ssl
 import string
 import requests
 import sys
@@ -66,42 +65,42 @@ banner = f"""{fore_colors['yellow']}{styles['bright']}
 =|_ _|= / _|___ ___| |=| |_| |_  ___   _ _| |_ _  _| |_| |_  _ __  
  =| | =|  _/ -_) -_) |=|  _| ' \\| -_)=| '_| ' \\ || |  _| ' \\| '  \\\\
 =|___|=|_| \\___\\___|_|= \\__|_||_\\___|=|_| |_||_\\_, |\\__|_||_|_|_|_|=
-===============================================|__/{back_colors['green']}By.=Potter=V4.2====={back_colors['reset']} {styles['reset']}
->>{fore_colors['cyan']}Github:{fore_colors['reset']} {styles['bright']}https://github.com/Faminee777xxx/I-feel-the-rhythm{styles['reset']}
-    {fore_colors['reset']}"""
+===============================================|__/{back_colors['green']}By.=Potter=V4.3====={back_colors['reset']} {styles['reset']}
+>>{fore_colors['cyan']}Github:{fore_colors['reset']} {styles['bright']}https://github.com/Faminee777xxx/I-feel-the-rhythm{styles['reset']}"""
 
 def help():
     print(banner)
     print(r"""
-
-Options:                            What it do:
-
-  -h, --help                    Show this help menu
-  --ip <IP>                     Target IP
-  -p, --port <PORT>             Target Port (default: 80)
-  -ths, --threads <N>           Number of threads (default: 100)
-  -num-socks -n-socks           Number of Socks   (default: 1000)
-  -ra, --random-agent           Random User-Agent
-
-  \Mode Payload (Can use with tor&proxy)
-  //-payloada, --payload-attack     Send a JSON file to server
-  //--set-size-payload -set-p       Set Size of payload (default: 51200:50KB)
-  //--set-msg-payload               Set message of payload
-  //--random-payload                Randomized payload (Number)
- 
-  \Mode Slowloris (Can use with tor&proxy)
-  //-slowa, --slowloris-attack    Perform Slowloris attack
-
-  \Mode Tor & Proxy (U can use with Slowloris and Payload Mode)
-    \TOR
-  //--tor-ip                      Use TOR IP
-  //--tor-port                    Use TOR Port
-  //--change-tor-ip -c-tor-ip     Change Tor ip when Attacking
-    \Proxy
-  //--proxy-ip <IP>                 Use proxy IP
-  //--proxy-port <PORT>             Use proxy Port
-  //--proxy-list <proxy_list.txt>   Use more proxys
-    //--check-proxy-list            Check proxy in proxy list
+╔════════════════════════════════════════════════════════════════════╗
+║                            Options Help                            ║
+╠════════════════════════════════════════════════════════════════════╣
+║ -h, --help                  : Show this help menu                  ║
+║ --ip <IP>                   : Target IP                            ║
+║ -p, --port <PORT>           : Target Port (default: 80)            ║
+║ -ths, --threads <N>         : Number of threads (default: 100)     ║
+║ -num-socks, -n-socks        : Number of Socks (default: 1000)      ║
+║ -ra, --random-agent         : Random User-Agent                    ║
+╠════════════════════════════════════════════════════════════════════╣
+║ \Mode Payload (Can use with Tor & Proxy)                           ║
+║  -payloada, --payload-attack  : Send a JSON file to server         ║
+║  -set-size-payload, -set-p    : Set Size of payload (default: 50KB)║
+║  -set-msg-payload             : Set message of payload             ║
+║  -random-payload              : Randomized payload (Number)        ║
+╠════════════════════════════════════════════════════════════════════╣
+║ \Mode Slowloris (Can use with Tor & Proxy)                         ║
+║  -slowa, --slowloris-attack  : Perform Slowloris attack            ║
+╠════════════════════════════════════════════════════════════════════╣
+║ \Mode Tor & Proxy (Use with Slowloris and Payload)                 ║
+║  \TOR                                                              ║
+║    --tor-ip                   : Use TOR IP                         ║
+║    --tor-port                 : Use TOR Port                       ║
+║    --change-tor-ip, -c-tor-ip : Change TOR IP when attacking       ║
+║  \Proxy                                                            ║
+║    --proxy-ip <IP>               : Use proxy IP                    ║
+║    --proxy-port <PORT>           : Use proxy Port                  ║
+║    --proxy-list <proxy_list.txt> : Use more proxies                ║
+║    --check-proxy-list            : Check proxy in proxy list       ║
+╚════════════════════════════════════════════════════════════════════╝
     """)
 
 def clear_terminal():
@@ -621,7 +620,7 @@ def send_payload_with_proxy_list(proxy_ip_port=None):
 # Start attack
 # Check Help
 if args.help_menu:
-    print(help)
+    help()
     exit()
 else:
     pass
