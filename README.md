@@ -1,7 +1,7 @@
 ![the-rhythm](Img/i-feel-the-rhythm.png)
 
 # Attack Tool - Usage and Options 
-# Version 4.2
+# Version 4.3
 ## English Version
 
 ### Options and What They Do:
@@ -58,7 +58,7 @@
 ---
 
 ## เวอร์ชันภาษาไทย (Thai Version)
-# เวอร์ชั่น 4
+# เวอร์ชั่น 4.3
 ### ตัวเลือกและคำอธิบาย:
 
 | ตัวเลือก                      | คำอธิบาย                                    | ค่าเริ่มต้น     |
